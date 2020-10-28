@@ -412,16 +412,48 @@ summary {
 
 <h1 class="title toc-ignore">Interesting Forecasting Applications with R</h1>
 <h4 class="author">Liva Dogan - IE360 - Fall 2020</h4>
+<h4 class="date">28/10/2020</h4>
 
 </div>
 
 
-<pre><code>## Warning: package 'knitr' was built under R version 4.0.2</code></pre>
-<ol style="list-style-type: decimal">
-<li><p><a href="https://blogs.oracle.com/datascience/introduction-to-forecasting-with-arima-in-r">Time series forecasting using ARIMA models</a></p>
-<p>This example is important because it introduces the forecasting methodology using ARIMA models in R. The steps are …</p></li>
-<li></li>
-</ol>
+<div id="time-series-forecasting-using-arima-model" class="section level3">
+<h3>1. <a href="https://blogs.oracle.com/datascience/introduction-to-forecasting-with-arima-in-r">Time Series Forecasting Using ARIMA Model</a></h3>
+<p>This example is important because it introduces the forecasting methodology using ARIMA models in R. The steps are:</p>
+<ul>
+<li>Examination of data<br />
+</li>
+<li>Decomposition of data</li>
+<li>Stationarity check</li>
+<li>Autocorrelations &amp; choosing model order</li>
+<li>Fitting an ARIMA model</li>
+<li>Evaluation &amp; iteration</li>
+</ul>
+<p>After evaluation, model can be refitted if it is necessary. Finally, forecast is calculated using the chosen model.</p>
+</div>
+<div id="time-series-forecasting-using-ma-model" class="section level3">
+<h3>2. <a href="https://machinelearningmastery.com/time-series-forecasting-methods-in-python-cheat-sheet/">Time Series Forecasting Using MA Model</a></h3>
+<p>Moving Average(MA) method predicts the upcoming value by using a linear function of the residual errors from a mean process at prior time steps.</p>
+<p>MA method is usually used for the technical analysis of finance data to forecast possible future value of the investment. There are different MA methods such as Simple MA, Weighted MA, Exponential MA etc.</p>
+<p>This method is suitable for univariate time series without trend and seasonal components.</p>
+</div>
+<div id="time-series-forecasting-using-sarima-model" class="section level3">
+<h3>3. <a href="https://machinelearningmastery.com/time-series-forecasting-methods-in-python-cheat-sheet/">Time Series Forecasting Using SARIMA Model</a></h3>
+<p>Seasonal Autoregressive Integrated Moving Average(SARIMA) method works as a linear function of the differenced observations, errors, differenced seasonal observations and seasonal errors at prior time steps.</p>
+<p>SARIMA method uses the ARIMA model and seasonality together to predict future data. So, it is better to use SARIMA instead of ARIMA if a seasonal effect is suspected in the model.</p>
+<p>This method is suitable for univariate time series with trend and/or seasonal components.</p>
+</div>
+<div id="time-series-forecasting-using-var-model" class="section level3">
+<h3>4. <a href="https://machinelearningmastery.com/time-series-forecasting-methods-in-python-cheat-sheet/">Time Series Forecasting Using VAR Model</a></h3>
+<p>Vector Autoregression(VAR) method models the next step in each time series using an AR model. It is the generalization of AR to multiple parallel time series.</p>
+<p>This method is suitable for multivariate time series without trend and seasonal components.</p>
+</div>
+<div id="time-series-forecasting-using-varma-model" class="section level3">
+<h3>5. <a href="https://machinelearningmastery.com/time-series-forecasting-methods-in-python-cheat-sheet/">Time Series Forecasting Using VARMA Model</a></h3>
+<p>Vector Autoregression Moving Average(VARMA) method forecasts the next step in each time series using an ARMA model. VARMA is the generalization of ARMA to multiple parallel time series.</p>
+<p>A VARMA model can be used to develop different VAR or VMA models.</p>
+<p>VARMA method is suitable for multivariate time series without trend and seasonal components.</p>
+</div>
 
 
 
