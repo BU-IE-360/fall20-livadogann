@@ -153,7 +153,7 @@ yemeksepeti_boxplot
 It is seen that boxplots move on the same direction except 2016. The decrease in 2016 was explained before. So, we can easily say that there is a positive correlation between food spendings and the "yemeksepeti" search.
 
 
-
+You can click [here](https://bu-ie-360.github.io/fall20-livadogann/files/homework_1.Rmd) to reach the RMD code.
 
 
 
