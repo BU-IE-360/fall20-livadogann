@@ -1,0 +1,159 @@
+---
+title: "Data Visualization, Graphicsh and Google Trends"
+author: "Liva Dogan"
+date: "11/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Number of Houses Sold in Tekirdag & Search Popularity for "konut kredisi"
+
+The first data that I chose to observe is the number of house sold. The reason of choosing Tekirdag especially is that Tekirdag has the highest search popularity for "konut kredisi". The data shows the number of houses sold in Tekirdag monthly from 01/2015 to 10/2020. The line graph of number of houses sold in Tekirdag can be seen below:
+
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+konut_data <- read.delim("~/Desktop/IE360/HW1/tekirdagkonut.txt")
+konut_data$Date <- as.factor(konut_data$Date)
+konut_data$Year <- as.factor(konut_data$Year)
+konut_line <- ggplot(konut_data, aes(x = Date, y = Houses.Sold, group = 1)) + 
+  geom_line() + labs(title = "Number of Houses Sold in Tekirdag", subtitle = "01/2015 - 10/2020", caption = "evds2.tcmb.gov.tr", x = "Time", y = "Number of Houses Sold") + 
+  theme(axis.text.x = element_text(angle = 90, size = 6, hjust = 1))
+konut_line
+```
+
+
+If we look at the line graph, we see seasonal increases and decreases in the annual range and this pattern is almost preserved until 2019. In 2019, the up-and-down pattern is broken with a rapid decrease at the beginning of the year. Despite this, there is a huge increase in the fall and winter seasons, which may be caused by some economic regulations like housing interests. One of the interesting points of this graph is the decrease in the beginning of 2020. The data sees its lowest value since 2015. The reason for this is actually COVID-19. Due to the pandemic, many people are tend to save money more and more. Finally, the huge climb-up at the end of the graph might be explained by the decrease in prices of houses since demand gets lower and lower.
+
+The histogram table for each year can be seen below:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+konut_data <- read.delim("~/Desktop/IE360/HW1/tekirdagkonut.txt")
+konut_data$Date <- as.factor(konut_data$Date)
+konut_data$Year <- as.factor(konut_data$Year)
+konut_histogram <- ggplot(konut_data, aes(Houses.Sold)) + 
+  geom_histogram(bins = 30, color = "blue", fill = "white") + facet_grid(Year ~ .) + 
+  labs(title = "Histogram of Houses Sold in Trakya", subtitle = "Grouped for Each Year, 01/2015 - 10/2020", caption = "evds2.tcmb.gov.tr", x = "Number of Houses Sold")
+konut_histogram
+```
+
+For the first few years, shapes of each histogram are not identical but they look like similar. However, in 2019 and 2020, histograms lose their initial shape and converges to a horizontal line, which makes it harder to comment on the future of this dataset. Some of the reasons for this significant change may be economic situation of Turkey and the pandemic. The houses prices are unstable for 2 years due to the changes in the exchange rates. Also, the pandemic has changed the purchasing behavior of many people.
+
+To observe this data with a different aspect, I chose the keyword "konut kredisi" to observe its graphics over months in the same time period with the data of number of houses sold in Tekirdag. The line graphic for the search popularity of "konut kredisi" is below:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+konutkredisi_data <- read.delim("~/Desktop/IE360/HW1/konutkredisi.txt")
+konutkredisi_data$Date <- as.factor(konutkredisi_data$Date)
+konutkredisi_data$Year <- as.factor(konutkredisi_data$Year)
+konutkredisi_line <- ggplot(konutkredisi_data, aes(x = Date, y = Popularity, group = 1)) + 
+  geom_line() + labs(title = "Search Popularity for 'konut kredisi'", subtitle = "01/2015 - 10/2020", caption = "trends.google.com") + 
+  theme(axis.text.x = element_text(angle = 90, size = 6, hjust = 1))
+konutkredisi_line
+```
+
+It is seen that both graphs look similar to each other. The time of increases and decreases are really close to each other in first years. And if we check the last 2 years, the movement of two graphs are nearly the same. Thus, we can say that there is a positive correlation between these datas. To understand it more, we can check the boxplots of each data:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+konut_data <- read.delim("~/Desktop/IE360/HW1/tekirdagkonut.txt")
+konut_data$Date <- as.factor(konut_data$Date)
+konut_data$Year <- as.factor(konut_data$Year)
+konut_boxplot <- ggplot(konut_data, aes(x = Year, y = Houses.Sold, fill = Year)) + 
+  geom_boxplot() + labs(title = "Boxplot of Number of Houses Sold in Trakya", subtitle = "01/2015 - 10/2020", caption = "evds2.tcmb.gov.tr")
+konut_boxplot
+```
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+konutkredisi_data <- read.delim("~/Desktop/IE360/HW1/konutkredisi.txt")
+konutkredisi_data$Date <- as.factor(konutkredisi_data$Date)
+konutkredisi_data$Year <- as.factor(konutkredisi_data$Year)
+konutkredisi_boxplot <- ggplot(konutkredisi_data, aes(x = Year, y = Popularity, fill = Year)) + 
+  geom_boxplot() + labs(title = "Boxplot of Search Popularity for 'konut kredisi'", subtitle = "01/2015 - 10/2020", caption = "trends.google.com")
+konutkredisi_boxplot
+```
+
+The similarity between boxplots can be seen as it is seen on line graphs. By this, the positive correlation claim becomes stronger since the movements of annual boxplots are quite similar.
+
+
+### 2. Food Spendings over Months & Search Popularity for "yemeksepeti"
+
+The second data to be observed is the monthly food spendings of Turkish people. This data contains only the spendings made by credit cards. To understand the general ehavior of food spending, we can check the line graph of the data:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+harcama_data <- read.delim("~/Desktop/IE360/HW1/yemekharcamalari.txt")
+harcama_data$Year <- as.factor(harcama_data$Year)
+harcama_data$Date <- as.factor(harcama_data$Date)
+harcama_line <- ggplot(harcama_data, aes(x = Date, y = Food.Spending.in.thousands., group = 1)) + 
+  geom_line() + labs(title = "Food Spendings over Months", subtitle = "01/2015 - 11/2020", caption = "evds2.tcmb.gov.tr", x = "Time", y = "Money Spent on Food (in thousands)") + 
+  theme(axis.text.x = element_text(angle = 90, size = 6, hjust = 1))
+harcama_line
+```
+
+Altough there are some small sharp movements, there is an obvious increase trend in food spendings. Some of the reasons for this might be the increase in the number of online food stores or increase in the number of people preferring credit card instead of cash. However, the rapid decrease in the 03/2020 is the effect of COVID-19 since people avoid ordering food to minimize communiaction with other people.
+
+To understand more about the data, we can look at the histogram graphs:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+harcama_data <- read.delim("~/Desktop/IE360/HW1/yemekharcamalari.txt")
+harcama_data$Year <- as.factor(harcama_data$Year)
+harcama_data$Date <- as.factor(harcama_data$Date)
+harcama_histogram <- ggplot(harcama_data, aes(Food.Spending.in.thousands.)) + 
+  geom_histogram(bins = 30, color = "blue", fill = "white") + facet_grid(Year ~ .) + 
+  labs(title = "Histogram of Food Spendings over Months", subtitle = "Grouped for Each Year, 01/2015 - 11/2020", caption = "evds2.tcmb.gov.tr", x = "Money Spent on Food (in thousands)")
+harcama_histogram
+```
+
+The change in the shapes of histograms can be easily seen. It is hard to comment on its reasons but the increase trend of food spending can be seen by the movement of bars to the right.
+
+The keyword that I chose to observe the correlation is "yemeksepeti", which is the biggest website that people can order food. The line graph for search popularity of "yemeksepeti" is:
+
+```{r}
+library(ggplot2)
+yemeksepeti_data <- read.delim("~/Desktop/IE360/HW1/yemeksepeti.txt")
+yemeksepeti_data$Year <- as.factor(yemeksepeti_data$Year)
+yemeksepeti_data$Date <- as.factor(yemeksepeti_data$Date)
+yemeksepeti_line <- ggplot(yemeksepeti_data, aes(x = Date, y = Popularity, group = 1)) + 
+  geom_line() + labs(title = "Search Popularity for 'yemeksepeti'", subtitle = "01/2015 - 11/2020", caption = "trends.google.com") + 
+  theme(axis.text.x = element_text(angle = 90, size = 6, hjust = 1))
+yemeksepeti_line
+```
+
+The two line graphs seem quite similar, except the decrease of search popularity in 2016. But, there is a note in Trends website stating that searching mechanisms were updated on that date. So, this decrease might be a result of the changes in the searching mechanisms. It is also seen that pandemic has negatively affected the Google search for "yemeksepeti".
+
+Although we can claim that there is postive correlation between food spending and "yemeksepeti" search, we can check the boxplots to comment more realistic:
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+harcama_data <- read.delim("~/Desktop/IE360/HW1/yemekharcamalari.txt")
+harcama_data$Year <- as.factor(harcama_data$Year)
+harcama_data$Date <- as.factor(harcama_data$Date)
+harcama_boxplot <- ggplot(harcama_data, aes(x = Year, y = Food.Spending.in.thousands., fill = Year)) + 
+  geom_boxplot() + labs(title = "Boxplot of Food Spendings over Months", subtitle = "01/2015 - 11/2020", caption = "evds2.tcmb.gov.tr")
+harcama_boxplot
+```
+
+```{r, echo=FALSE, include=TRUE}
+library(ggplot2)
+yemeksepeti_data <- read.delim("~/Desktop/IE360/HW1/yemeksepeti.txt")
+yemeksepeti_data$Year <- as.factor(yemeksepeti_data$Year)
+yemeksepeti_data$Date <- as.factor(yemeksepeti_data$Date)
+yemeksepeti_boxplot <- ggplot(yemeksepeti_data, aes(x = Year, y = Popularity, fill = Year)) + 
+  geom_boxplot() + labs(title = "Boxplot of Search Popularity for 'yemeksepeti'", subtitle = "01/2015 - 11/2020", caption = "trends.google.com")
+yemeksepeti_boxplot
+```
+
+It is seen that boxplots move on the same direction except 2016. The decrease in 2016 was explained before. So, we can easily say that there is a positive correlation between food spendings and the "yemeksepeti" search.
+
+
+
+
+
+
