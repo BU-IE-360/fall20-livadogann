@@ -1,0 +1,194 @@
+---
+title: "Manipulation, Visualization and Analysis of Exchange Rate, Money in Circulation
+  and Vehicle Price Index"
+author: "Liva Dogan"
+date: "12/14/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### 1. Introduction
+
+This report is prepared to check whether there is a correlation between the USD/TRY exchange rate, the amount of money in circulation, and vehicle purchasing price index by using data manipulation, data visualization and correlation tests. In order to reach a proper comparison, each of the datasets has the same time interval(01/2010 - 11/2020) and frequency(monthly).
+
+The reason of selecting these three datasets is that many of the cars are imported from different countries, usually paid by US dollars. So, I think that USD/TRY exchange rate has the same pattern with the vehicle price index. On the other hand, general behavior of Turkey in trade is that Turkey is an importing country rather than exporting. Thus, many if the money transactions are held in different currencies, generally in US dollars since it has higher area of use. As a concluison, independent from the real money circulation, the total amount of money in circulation will naturally increase due to the increase in USD/TRY exchange rate because the data of money in circulation is held 
+
+
+### 2. Analysis
+
+The main question to be answered is "How does the changes on USD/TRY exchange rate affect the vehicle price index and the money in circulation?". To be able to answer this question, we can plot the data by using different graph methods such as line graph, histogram, and boxplot. First of all, there are some packages to install in order to plot graphs and calculate correlations. Necessary libraries are called with the following code lines:
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+library(lubridate)
+library(dplyr)
+library(ggplot2)
+library(data.table)
+library(patchwork)
+library(ggthemes)
+library(GGally)
+library(PerformanceAnalytics)
+library(psych)
+library(corrplot)
+```
+
+After including libraries, the datasets are imported and modified to reach the date column properly.
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+usdtry <- read.delim("usdtry.txt")
+usdtry$Date <- ym(usdtry$Date)
+
+moneyincirculation <- read.delim("money-circ.txt")
+moneyincirculation$Date <- ym(moneyincirculation$Date)
+
+priceindex <- read.delim("priceindex.txt")
+priceindex$Date <- ym(priceindex$Date)
+```
+
+Then, a function, which returns a vector consisting of years in selected time interval, is written to group the date values year by year to ease the plotting. After that, the values created by function are added to the each dataset.
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+Years <- function()
+{
+  vec <- seq(2020, 2020, length.out = 131)
+  for (i in 1:10)
+  {
+    vec[((i-1)*12+1):(i*12)] <- 2009+i
+  }
+  return(vec)
+}
+
+usdtry$Year <- Years()
+moneyincirculation$Year <- Years()
+priceindex$Year <- Years()
+```
+
+After making necessary adjustments and manipulations, the data is ready to plot.
+
+#### A. Line Graphs
+
+Firstly, we can plot the line graph of each data and comment on them by visual observation.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(usdtry, aes(x = Date, y = Exchange.Rate)) + geom_line(color = "red") + 
+  labs(title = "Line Graph of USD/TRY Exchange Rate", subtitle = "01/2010 - 11/2020, Monthly", 
+       caption = "evds2.tcmb.gov.tr", x = "Date", y = "Exchange Rate") + 
+  theme(axis.text.y = element_text(angle = 90))
+
+ggplot(moneyincirculation, aes(x = Date, y = Money.in.Circulation)) + geom_line(color = "green") + 
+  labs(title = "Line Graph of Money in Circulation", subtitle = "01/2010 - 11/2020, Monthly", 
+       caption = "evds2.tcmb.gov.tr", x = "Date", y = "Money Amount") + 
+  theme(axis.text.y = element_text(angle = 90))
+
+ggplot(priceindex, aes(x = Date, y = Price.Index)) + geom_line(color = "Blue") + 
+  labs(title = "Line Graph of Vehicle Price Index", subtitle = "01/2010 - 11/2020, Monthly", 
+       caption = "evds2.tcmb.gov.tr", x = "Date", y = "Vehicle Price Index") + 
+  theme(axis.text.y = element_text(angle = 90))
+```
+
+(The grapsh are shown separately because y-axis values of each dataset consist of values from different intervals, which makes the comparison on same axis impossible.)
+
+As it can be seen on line graphs, each data has nearly the same movement even though the time of movement differs sligthly from one to another, which shows that it requires some time to process the impact of changes. However, there are, of course, some exceptions. The sharp and rapid decrease of money in circulation in 2020 can be considered as one of the main exceptions. A reason for this sharp movement might be the pandemic affecting the economy. Due to pandemic precautions and regulations determined by government and personal preventive decisions taken by the customers, total spendings among Turkey have significantly decreased, which led to this sharp decrease of money in circulation.
+
+#### B. Histograms
+
+To have a deeper perspective, we can check the histogram bars to see the distribution of the data in different years.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(usdtry, aes(x = Exchange.Rate, group = Year)) + facet_wrap(~Year, ncol = 3) + 
+  geom_histogram(bins = 20, color = "red", fill = "white") + 
+  labs(title = "Histogram of USD/TRY Exchange Rates for Each Year", 
+       caption = "evds2.tcmb.gov.tr", x = "Exchange Rate", y = "Count")
+
+ggplot(moneyincirculation, aes(x = Money.in.Circulation, group = Year)) + 
+  facet_wrap(~Year, ncol = 3) + geom_histogram(bins = 20, color = "green", fill = "white") + 
+  labs(title = "Histogram of Money in Circulation for Each Year", 
+       caption = "evds2.tcmb.gov.tr", x = "Money in Circulation", y = "Count")
+
+ggplot(priceindex, aes(x = Price.Index, group = Year)) + facet_wrap(~Year, ncol = 3) + 
+  geom_histogram(bins = 20, color = "blue", fill = "white") +
+  labs(title = "Histogram of Vehicle Price Index for Each Year", 
+       caption = "evds2.tcmb.gov.tr", x = "Vehicle Price Index", y = "Count")
+```
+
+As line graphs, histograms have very similar movements, too. The general movement is that values are cumulated in a small interval for the initial years. But, especially after 2018, the values are spread over a wide interval with lower density, which is a sign of high variability. This variability might be caused by the unstable economy of Turkey due to the different economic policies that are applied during these years. As a result of this variability, it becomes hard to forecast the future value for these periods, which might lead to unexpected losses on financial investments.
+
+#### C. Boxplot Graphs
+
+Boxplot graphs give us detailed information about the data within the selected group. For this report, each dataset is grouped year by year. So, there will be a boxplot showing the data of each year.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(usdtry, aes(x = as.factor(Year), y = Exchange.Rate, fill = as.factor(Year))) + 
+  geom_boxplot() + labs(title = "Boxplot Graphs of USD/TRY Exchange Rate", 
+                        subtitle = "Grouped by Years", caption = "evds2.tcmb.gov.tr", 
+                        x = "Year", y = "Exchange Rate") + theme(axis.text.y = element_text(angle = 90))
+
+ggplot(moneyincirculation, aes(x = as.factor(Year), y = Money.in.Circulation, fill = as.factor(Year))) + 
+  geom_boxplot() + labs(title = "Boxplot Graphs of Money in Circulation", 
+                        subtitle = "Grouped by Years", caption = "evds2.tcmb.gov.tr", 
+                        x = "Year", y = "Money in Circulation") + theme(axis.text.y = element_text(angle = 90))
+
+ggplot(priceindex, aes(x = as.factor(Year), y = Price.Index, fill = as.factor(Year))) + 
+  geom_boxplot() + labs(title = "Boxplot Graphs of Vehicle Price Index", 
+                        subtitle = "Gropued by Years", caption = "evds2.tcmb.gov.tr", 
+                        x = "Year", y = "Vehicle Price Index") + theme(axis.text.y = element_text(angle = 90))
+```
+
+As all of boxplot graphs show, each dataset has an increase trend. And, the similarity of movement is obvious, which is another point that shows the correlation without calculations. Furthermore, the comments made on histograms can be described using these boxplot graphs. For instance, it is seen on histograms of initial years that values are not spread over a wide range. This can also be observed on boxplot graphs. The boxplots for the initial years are shorter than other years, which means that the variance of data is too small. However, the height of boxplots increases as time goes on. This movement is also observed on histogram by values spreadin over a wide range instead of cumulating. One of the interesting points on these boxplot graphs is the huge jump on the boxplot graph of money in circulation. Each graph has the increasing trend; but, the jump in 2020 on money in circulation graph is much more than the other data movements. Although we cannot reach the exact cause of this jump by observing the boxplots, we can comment on the possible causes. One of the possible causes is that a new investment fund might have be created and many investors may have used this fund to invest on new projects. Another possibility is the money transaction from different countries due to financial agreements or high-volume of import and export. 
+
+#### D. Correlogram and Correlation Tests
+
+After observing different type of graphs and realizing the similarity between datasets, we can go on with the correlation calculations to see if the values are actually correlated. Firstly, we can look at the correlogram which shows the coefficient of correlation between the datasets.
+
+```{r, echo=FALSE, include=TRUE}
+corr_data <- data.frame("USD/TRY" = usdtry$Exchange.Rate, 
+                        "Money in Circulation" = moneyincirculation$Money.in.Circulation,
+                        "Vehicle Price Index" = priceindex$Price.Index)
+correlation <- cor(corr_data)
+corrplot(correlation, method = "circle", type = "upper", tl.col = "black", tl.srt = 30, 
+         addCoef.col = "white")
+```
+
+By checking the correlogram, the comments about the similarity made for the above graphs are right. Each of the correlation coefficients is really close to 1, which shows that the correlation between them is too strong. The highest correlation is 0.99 between USD/TRY exchange rate and vehicle price index. The reason of this is that these pair is directly related compared to the other pairs because many of the vehicles are imported and their prices are determined by the current exchange rate.
+
+To get further information, we can apply Pearson's correlation tests to see the confidence intervals and p-values.
+
+```{r, echo=FALSE, include=TRUE}
+cor.test(usdtry$Exchange.Rate, priceindex$Price.Index)
+cor.test(usdtry$Exchange.Rate, moneyincirculation$Money.in.Circulation)
+cor.test(moneyincirculation$Money.in.Circulation, priceindex$Price.Index)
+```
+
+This test shows the necessary information to construct a confidence interval with the significance level alpha = 0.05. The calculated p-value is smaller than alpha for each test, which shows that each pair is strongly correlated on the 95% confidence interval.
+
+
+### 3. Conclusion
+
+In this report, USD/TRY exchange rate, vehicle price index and money in circulation datasets are examined to see if there is a correlation between them. After examining the plots and calculating correlation coefficients, it is seen that these three datasets are strongly correlated. The highest correlation is between the USD/TRY exchange rate and vehicle price index. The possible reasons for this correlation is explained by using the automotive industry of Turkey, which consists of usually imported cars. Also, money in circulation is also correlated with these data since many traders make their trade agreements on different currencies because of the importing and exporting.
+
+
+To reach the RMD file, please click [here](https://bu-ie-360.github.io/fall20-livadogann/files/homework_2.Rmd).
+
+### References
+https://evds2.tcmb.gov.tr
+
+http://www.sthda.com/english/wiki/visualize-correlation-matrix-using-correlogram
+
+http://www.sthda.com/english/wiki/correlation-test-between-two-variables-in-r#pearson-correlation-test
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
