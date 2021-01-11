@@ -1,0 +1,146 @@
+---
+title: "Time Series Regression for Prediction"
+author: "Liva Dogan"
+date: "1/11/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(fpp)
+library(ggplot2)
+library(data.table)
+library(corrplot)
+library(lubridate)
+```
+
+### 1. Introduction
+
+This report is prepared to predict the amount of total liquidated firms in December 2020 by using time series regression methods. In order to make a prediction, different datasets can used to set a regression model or the source data can be used for autoregression. To decide on which data to use for prediction, the correlation of different datasets with the amount of liquidated firms can be observed. After receiving the necessary data, a linear regression model is constructed to predict the data of December 2020. Before starting analysis section, let us check the graph of the data to comment on in latter secitons.
+
+```{r, echo=FALSE, include=TRUE}
+liquidated <- read.delim("Liquidated Total.txt")
+liquidated$Date <- ym(liquidated$Date)
+liquidated = data.table(liquidated)
+
+ggplot(liquidated, aes(x = Date, y = Liquidated.Total)) + 
+  geom_line() + geom_smooth(method = "lm")
+```
+
+As it is seen in graph, the data has no trend effect. But, the seasonality effect is pretty strong. This information will be used for prediction.
+
+### 2. Correlation Analysis
+
+There are several datasets that can bu used as an independent variable in a linear regression model. For our model, the datasets that may be correlated with the number of liquidated firms are interest rate of commercial loans, percentage of people having a decreasing demand for last 3 months, financial reliability index, and percentage of people having total order amount lower than the average. The correlogram of these data can be seen below:
+
+
+```{r, echo=FALSE, include=TRUE}
+interest_rate <- read.delim("Commercial Loans.txt")
+decreasing_demand <- read.delim("Demand(Decreased) for Last 3 Months.txt")
+fri <- read.delim("Financial Reliability Index.txt")
+order_below_avg <- read.delim("Total Order Below Average.txt")
+
+corr_data <- data.frame("Liquidated" = liquidated$Liquidated.Total, "Interest Rate" = interest_rate$Loan, "Percent of Decreasing Demand" = decreasing_demand$Expectation, "Reliability Index" = fri$Rel_Index, "Percent of Order Below Avg" = order_below_avg$Percent)
+correlation <- cor(corr_data)
+corrplot(correlation, method = "circle", type = "upper", tl.col = "black", tl.srt = 30, addCoef.col = "black")
+
+```
+
+
+As it is seen on correlogram, number of liquidated firms is not correlated with any selected dataset. Thus, constructing a linear regression model with above data would result in wrong forecasts. So, constructing an autoregression model by usig data itself is more meaningful for the data.
+
+
+### 3. Constructing the Model
+
+As it is mentioned above, the seasonality of the data is quite strong. So, this information will help us during the construction of forecast model. First of all, we need to imply this seasonality effect to the data table. In order to do this, a sequence of 1, 2, ..., 12 is added to the data table by repeating.
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+Month <- seq(1, 12, by = 1)
+liquidated = cbind(liquidated, Month)
+```
+
+After adding the seasonality effect by the above commands, we can now construct the regression model. In order to see the effect of seasonality better, the month values will be added as "factor" instead of numeric values.
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+fit <- lm(formula = liquidated$Liquidated.Total ~ as.factor(liquidated$Month), data = liquidated)
+```
+
+The summary of the fitted model can be seen below:
+
+```{r, echo=FALSE, include=TRUE}
+summary(fit)
+```
+
+This table shows the significance level for intercept and the month coefficients. As it is seen, only the significance level of December. The reason for that is the huge jump of data for that month. Also, the adjusted R-squared value is 0.8406, which shows that the model is sufficient enough for prediction.
+
+After this, the analysis of residuals can be seen below:
+
+```{r, echo=FALSE, include=TRUE}
+checkresiduals(fit)
+```
+
+In the first graph, the assumptions of constant variance and zero mean are held with few defects, which means that model is still sufficient. In the autocorrelation graph, only the autocorrelation of lag = 1 is greater than the desired value but the rest is between the confidence interval. Finally, histogram of residuals fits the normal distribution very well.
+
+
+### 4. Implication of Model
+
+After achieving a theoretically good model, we should observe the fitted values and residuals by comparing them to the actual data. To do this, two new columns named "Fitted" and "Residuals" should be added to data and filled with respect to the model.
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+liquidated[, Fitted := fitted(fit)]
+liquidated[, Residuals := residuals(fit)]
+```
+
+After creating and filling these two columns, we should first check the plot of fitted values vs. residuals.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(liquidated, aes(x = Fitted, y = Residuals)) + geom_point()
+```
+
+This graph shows how residuals are distributed among fitted values. The clutter of the points show that the model is not autocorrelated and proper to use as a forecast model. The reason of the huge space between points is that there are no actual values in that interval; so, there should not be any fitted value in that interval.
+
+The second graph to be checked is the plot of actual values vs. fitted values, which can be seen below:
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(liquidated, aes(x = Liquidated.Total, y = Fitted)) +
+  geom_point() +
+  geom_abline(slope = 1, intercept = 0)
+```
+
+This graph shows the relation between actual values and predicted values. The expected behavior of this plot is that points lie on the y = x line. To observe this, that line is also plotted. There are some deviations from the line, which is natural since we cannot have 100% significant model.
+
+After making necessary observations, now we can predict the data for December 2020. To do this, a new line should be added to the data table with the following command:
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+liquidated = rbind(liquidated, data.table(Date = as.Date("2020-12-01"), Month = as.factor(12)), fill = T)
+```
+
+This command creates the new line and assigns the necessary values to the related columns. After having this line, we can assign the prediction to this new line:
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+liquidated[,Fitted := predict(fit, liquidated[is.na(Fitted) == T])]
+```
+
+### 5. Conclusion
+
+After completing the model and fitting all values, our model is ready to plot and compare with the actual values:
+
+```{r, echo=FALSE, include=TRUE}
+ggplot() +
+  geom_line(data = liquidated, aes(x = Date, y = Liquidated.Total, color = "Liquidated.Total")) + 
+  geom_line(data = liquidated, aes(x = Date, y = Fitted, color = "Fitted"))
+```
+
+As it is seen on graph, fitted values are really close to the actual values. And, the forecast for December 2020 is 2114.80. To sum up, this forecast model uses only the seasonality effect since the data follows nearly the same pattern for months in each year. The intercept and coefficients can be seen below for easy access:
+
+```{r, echo=FALSE, include=TRUE}
+fit
+```
+
+To reach the RMD file, please click [here](https://bu-ie-360.github.io/fall20-livadogann/files/homework_3.Rmd).
+
+
+
+
+
+
