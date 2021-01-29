@@ -11,3 +11,6 @@
 
 ## 12/01/2020
 [Here](files/homework_3.html) is my homework about predicting data using regression methods.
+
+## 29/01/2020
+[Here](files/homework4.html) is my homework about stationarity analysis and forecasting of daily electricity consumption in Turkey by using ARIMA model.

@@ -1,0 +1,189 @@
+---
+title: "Stationarity Analysis and Forecasting via ARIMA"
+author: "Liva Dogan"
+date: "1/29/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(readxl)
+library(data.table)
+library(lubridate)
+library(ggplot2)
+library(forecast)
+library(urca)
+```
+
+### 1. Introduction
+
+This report is prepared to observe the daily electricity consumption of Turkey and to forecast the future consumption levels. Since daily consumption data series is non-stationary due to different reasons as stated in the class, the first step of forecasting should be making the data stationary. After reaching a stationary series, an ARIMA model to forecast future values can be used for this case. Finally, we can comment on the reliability of this forecasting model by checking some error statistics.
+
+### 2. Stationarity Analysis
+
+Before starting forecasting, we should observe the series visually in order to be able to comment on its properties. However, we need some arrangements on data since it is provided as hourly but we need daily forecast. In order to manipulate the data to the form we need, following lines are applied:
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+consumption <- read_excel("Real Time Consumption Excel.xls")
+consumption = data.table(consumption)
+consumption$Date <- as.Date(consumption$Date, "%d.%m.%Y")
+
+Mean_Consumption <- c(0, 0, 0)
+consumption = cbind(consumption, Mean_Consumption)
+for (i in seq(1, 35256, by = 24))
+{
+  daily_cons = 0
+  for (k in 0:23) 
+  {
+    daily_cons = daily_cons + consumption$Consumption[(i+k)]
+  }
+  consumption$Mean_Consumption[i] = daily_cons / 24
+}
+
+consumption <- consumption[consumption$Hour == "00:00"]
+consumption <- consumption[, !"Hour"]
+consumption <- consumption[, !"Consumption"]
+```
+
+After these steps, the series is ready to plot.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(data = consumption) + geom_line(aes(x = consumption$Date, y = consumption$Mean_Consumption))
+```
+
+As it is seen above, the mean goes up and down over time and variance is not constant at all, which are the two signs of non-stationarity. There are some rapid decreases among time, which are the religious holidays, except the last rapid decrease. The last one is effect of pandemic on the industrial consumption. Furthermore, the seasonality of data can be seen clearly by checking the line graph. For further observation, we can use the autocorrelation graph:
+
+```{r, echo=FALSE, include=TRUE}
+acf(consumption$Mean_Consumption)
+```
+
+The autocorrelation observed on data is too high to be stationary. Also, the pattern of the bars reflects the seasonality. As it is seen, the autocorrelation value is higher than its neighbors for lag 7, lag 14 etc. These values show that the seasonality of consumption data is weekly. This information will be used while building the model.
+
+One way to avoid stationarity is to take differences between different dates. Since this consumption data has weekly seasonality, we can use the differences between the day and seven day before that day to have a stationary data. 
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+consumption[, WeeklyDiff := Mean_Consumption-shift(Mean_Consumption, 7)]
+```
+
+After adding the weekly difference to the data, we can check whether it becomes stationary or not by simply looking at the line graph and autocorrelation plot.
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(data = consumption) + geom_line(aes(x = consumption$Date, y = consumption$WeeklyDiff))
+acf(consumption$WeeklyDiff[!is.na(consumption$WeeklyDiff)])
+```
+
+For the line graph, we can easily say that the mean does not change significantly as the previous one and it is around zero. On the other hand, variance seems to change over time, which is an unwanted situation. However, we can comment on the variance as it remains constant over time but there are some outlier points, as religious holidays or special days, and ignoring them does not significantly affect our assumption constant variance.
+
+For further information, we can apply different tests for stationarity. Two of them are Ljung-Box test and KPSS Unit Root test.
+
+```{r, echo=FALSE, include=TRUE}
+Box.test(consumption$WeeklyDiff, lag = 7, type = "Ljung-Box")
+summary(ur.kpss(consumption$WeeklyDiff))
+```
+
+The Ljung-Box test(first one) shows the p-value for the hypothesis testing of stationarity. The result of this test by evaluating p-value is that we fail to reject the hypothesis that the data is stationary. The KPSS Unit Root test(second one) gives us the test statistic and some threshold values for different significance levels. Again, our test statistic is smaller than any of the significance level thresholds. Thus, we can say that the stationarity of our data is shown by different statistical tests, which means the data is ready to apply ARIMA model. 
+
+### 3. ARIMA Model Building and Forecasting
+
+Since we have a stationary series, we can apply an ARIMA model to forecast the future consumption. But, deciding which parameters to use on model is not determined. To determine the parameters, we can easily call a function called "auto.arima()", which evaluates AIC and BIC values for different parameter sets and returns the parameter set that provides the smallest AIC/BIC.
+
+```{r, echo=FALSE, include=TRUE}
+arima_model = auto.arima(consumption$WeeklyDiff, seasonal = F, trace = T)
+```
+
+This function states that the best model can be applied for this data is ARIMA(2,0,2) with zero-mean. The function gives the difference parameter as 0 because the the difference is applied before. After that, the forecasted values are ready by these 2 lines:
+
+```{r, include=TRUE, results='hide', warning=FALSE, message=FALSE}
+nahead = 15
+forecast_values <- forecast(arima_model, h = nahead)
+```
+
+This function gives the forecasted "difference" values for next 15 days, from 09/02/2021 to 23/02/2021. Howeever, we cannot directly use the difference forecast. We can reach the actual forecast value after making some calculations. 
+
+```{r, echo=FALSE, include=TRUE}
+observed_data <- read_excel("9-23 Consumption.xls")
+colnames(observed_data) <- c("Date", "Hour", "Consumption")
+observed_data = data.table(observed_data)
+observed_data$Date <- as.Date(observed_data$Date, "%d.%m.%Y")
+
+Mean_Consumption <- c(0, 0, 0)
+observed_data = cbind(observed_data, Mean_Consumption)
+for (i in seq(1, 360, by = 24))
+{
+  daily_cons = 0
+  for (k in 0:23) 
+  {
+    daily_cons = daily_cons + observed_data$Consumption[(i+k)]
+  }
+  observed_data$Mean_Consumption[i] = daily_cons / 24
+}
+
+observed_data <- observed_data[observed_data$Hour == "00:00"]
+observed_data <- observed_data[, !"Hour"]
+observed_data <- observed_data[, !"Consumption"]
+
+predict_table = consumption[1:nahead]
+predict_table[, Mean_Consumption := observed_data$Mean_Consumption]
+predict_table[, WeeklyDiff := NA]
+predict_table$Date = max(consumption$Date) + c(1:nahead)
+
+final_table <- copy(consumption)
+final_table <- rbind(consumption, predict_table)
+final_table[Date < "2021-01-09", Pred_Diff := WeeklyDiff]
+final_table[Date > "2021-01-08", Pred_Diff := forecast_values$mean]
+final_table[, Forecast:=Pred_Diff+shift(Mean_Consumption, 7)]
+
+tail(final_table, 25)
+```
+
+This table gives us the actual mean consumptions, actual weekly differences, predicted differences and forecast values for future consumption. The weekly difference is not calculated after 09/02/2021 because it is the beginning of the forecasting period. The actual mean consumptions for the forecasting period are taken from EPIAS in order to compare our forecasts. The predicted difference and forecasted consumption values are the same as actual data for dates before forecasting period. In conclusion, the actual consumptions and forecasted values look similar for the forecasting period. However, a statistical comparison is necessary to show the reliability of this model.
+
+### 4. Statistical Analysis and Comparison
+
+Firstly, we can observe the line graphs of actual and forecasted consumption values to see the similiarity between them:
+
+```{r, echo=FALSE, include=TRUE}
+ggplot(subset(final_table, Date > "2021-01-08")) +
+  geom_line(aes(x = Date, y = Mean_Consumption, color = "Mean_Consumption")) +
+  geom_line(aes(x = Date, y = Forecast, color = "Forecast"))
+```
+
+These two lines show that the movement of actual and forecast values are quiet similar. On the other hand, there are some differences between the value of actual and forecasted consumptions. To get further information about the reliability of this ARIMA model, we can check some statistical calculations:
+
+```{r, echo=FALSE, include=TRUE}
+output <- function(actuals, forecasts)
+{
+  n=length(actuals)
+  error = actuals-forecasts
+  mean=mean(actuals)
+  sd=sd(actuals)
+  bias = sum(error)/sum(actuals)
+  mape = sum(abs(error/actuals))/n
+  mad = sum(abs(error))/n
+  wmape = mad/mean
+  l = data.frame(n,mean,sd,bias,mape,mad,wmape)
+  return(l)
+}
+
+output(final_table$Mean_Consumption[which(final_table$Date > "2021-01-08")],
+       final_table$Forecast[which(final_table$Date > "2021-01-08")])
+```
+
+As it is seen, MAPE and WMAPE values are really small, which shows that the reliability of the model is supported by these small error calculations.
+
+### 5. Conclusion
+
+To conclude, we wanted to forecast the future values of daily electricity consumption in Turkey. However, the raw data was not stationary due to the things like religious holidays or special days. So, we tried to make the data stationary by applying seasonal differencing method. After that, we built an ARIMA model, whose parameters were determined by a built-in function. Finally, the reliability of the model was supported by visual graphs and statistical calculations. The actual consumptions and forecasted values can be seen below for easy access:
+
+```{r, echo=FALSE, include=TRUE}
+tail(final_table, 15)
+```
+
+To reach the RMD file, please click [here](https://bu-ie-360.github.io/fall20-livadogann/files/homework4.Rmd).
+
+
+
+
+
+
+
