@@ -9,7 +9,7 @@
 ## 16/12/2020
 [Here](files/homework_2.html) is my homework about data analysis using data manipulation and visualization.
 
-## 12/01/2020
+## 12/01/2021
 [Here](files/homework_3.html) is my homework about predicting data using regression methods.
 
 ## 29/01/2021
