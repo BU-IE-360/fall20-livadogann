@@ -1,10 +1,3 @@
----
-title: "Project Report"
-author: "Group-9: Liva Dogan, Kadir Inip, Mehmet Yusuf Kaya"
-date: "13 02 2021"
-output: html_document
----
-
 ```{r libraries, include=FALSE}
 library(lubridate)
 library(zoo)
@@ -1328,7 +1321,17 @@ send_submission(predictions, token, url=subm_url, submit_now=F)
 
 ```
 
-### 5. Conclusion and Future Works
+### 5. Experimental Results
+
+At the end of first submission week, we saw that ARIMA model did not work well. Its WMAPE value calculated by system was near 0.05. Then, we developed the MA model with 2-week period. Before starting submission with MA model, we tested both models for the time period starting from 01.01.2021.  After calculating WMAPE for each model in the determined time period, we saw that the WMAPE of ARIMA model was 0.0529 and WMAPE of MA model was 0.0379. So, we continued submission with the model having smaller WMAPE.
+
+![Line Graph of Actual vs Forecast Values - ARIMA Model](ARIMA.png)
+
+![Line Graph of Actual vs Forecast Values - MA2 Model](MA2.png)
+
+If we observe the line graphs for these two models, the deviation between the actual consumptions and forecast values are higher in the ARIMA model. However, for the MA2 model, the two lines are closer to each other compared to ARIMA model.
+
+### 6. Conclusion and Future Works
 
 In this term project, it can be understood that the electricity consumption for Turkey is increasing day by day, the reasons behind the increasing trend didn't scrutinize in the project but it can be related to increased GDP, increased consumption understanding, increased industry index in Turkey etc. Our ARIMA model is founded and worked on the religious and special days outliers effects and MA model is focused on short-term forecasting performance. In the ARIMA case, we divided the total data to 24 different data sets and build auto.arima for each one. Then forecasted the day d+1 for only special and religious day regressors. The WMAPE score it is observed that, the model is not enough for market-usage. After ARIMA model, we change our perspective to different and more simple forecasting methods which is Simple MA. In the Simple MA model, we use only one and two week behind data and forecast the day d+1 days' identified hour. In the short-run period, we can say that, if there is not any important special or religious outlier day, the MA model works well enough. On the other hand, for long-run period the ARIMA model works well with respect to simple MA because the effects of special and religious days on consumption are significant. 
 
